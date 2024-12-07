@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casino Estoril</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            text-align: center;
+        }
+
+        .container {
+            width: 60%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            color: #333;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            margin: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background-color: #999;
+        }
+
+        #game-info {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 80%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            margin: auto;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #log {
+            margin-top: 20px;
+        }
+
+        #mensagem {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        #cheque {
+            margin-top: 20px;
+            font-size: 18px;
+            padding: 15px;
+            border: 2px solid #4CAF50;
+            background-color: #e0f7e0;
+        }
+
+        .red {
+            background-color: red;
+            color: white;
+        }
+
+        .green {
+            background-color: green;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Casino Estoril</h1>
+        
+        <div id="game-info">
+            <p>Saldo: <span id="saldo">100</span> euros</p>
+            <p>Valor da Aposta: <input type="number" id="aposta" min="1" max="10" value="1"> euros</p>
+            <label>
+                <input type="checkbox" id="usarDicas"> Usar dicas (10% de desconto no ganho)
+            </label>
+            <br><br>
+            <button id="apostar" onclick="apostar()">Apostar</button>
+        </div>
+
+        <h2>Tente adivinhar o número sorteado entre 1 e 10</h2>
+        <div>
+            <input type="number" id="palpite" min="1" max="10" placeholder="Digite seu palpite" disabled>
+        </div>
+
+        <div id="log">
+            <h3>Histórico de Apostas:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tentativa</th>
+                        <th>Aposta</th>
+                        <th>Resultado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-historico">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="mensagem"></div>
+
+        <div id="cheque" style="display:none;">
+            <h3>Cheque</h3>
+            <p id="nome-jogador">Jogador: <span id="nome"></span></p>
+            <p id="quantia"></p>
+        </div>
+    </div>
+
+    <script>
+        let saldo = 100; 
+        let numeroSorteado = 0; 
+        let tentativas = 0; 
+        let nomeJogador = "Jogador"; 
+        let dicasAtivas = false; 
+
+        
+        function iniciarJogo() {
+            numeroSorteado = Math.floor(Math.random() * 10) + 1; 
+            document.getElementById('palpite').disabled = false; 
+            document.getElementById('apostar').disabled = false; 
+            document.getElementById('mensagem').textContent = ''; 
+            document.getElementById('mensagem').classList.remove("red", "green");
+            tentativas = 0; 
+            atualizarSaldo();
+        }
+
+        
+        function atualizarSaldo() {
+            document.getElementById('saldo').textContent = saldo;
+        }
+
+        
+        function apostar() {
+            const aposta = parseInt(document.getElementById('aposta').value);
+            const palpite = parseInt(document.getElementById('palpite').value);
+            const usarDicas = document.getElementById('usarDicas').checked;
+
+           
+            if (aposta > saldo || aposta <= 0) {
+                alert("Aposta inválida! Verifique seu saldo.");
+                return;
+            }
+
+            
+            if (saldo <= 0) {
+                alert("Você não tem saldo suficiente!");
+                return;
+            }
+
+            
+            tentativas++;
+
+            
+            if (palpite === numeroSorteado) {
+                let ganho = aposta;
+
+               
+                if (usarDicas) {
+                    ganho *= 0.9;
+                }
+
+                saldo += ganho; 
+                document.getElementById('mensagem').textContent = `Você acertou! Seu ganho: ${ganho.toFixed(2)} euros.`;
+                document.getElementById('mensagem').classList.add("green");
+                document.getElementById('palpite').disabled = true;
+                document.getElementById('apostar').disabled = true;
+                mostrarCheque(ganho);
+            } else {
+                saldo -= aposta; 
+                document.getElementById('mensagem').textContent = `Você errou. Tente novamente!`;
+                document.getElementById('mensagem').classList.add("red");
+            }
+
+            
+            adicionarHistorico(palpite, aposta, palpite === numeroSorteado);
+
+            
+            atualizarSaldo();
+
+            
+            if (saldo <= 0) {
+                alert("Você ficou sem saldo!");
+                document.getElementById('palpite').disabled = true;
+                document.getElementById('apostar').disabled = true;
+            }
+        }
+
+        
+        function adicionarHistorico(palpite, aposta, acerto) {
+            const tabelaHistorico = document.getElementById('tabela-historico');
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${tentativas}</td><td>${aposta}</td><td>${acerto ? 'Acertou' : 'Errou'}</td>`;
+            tabelaHistorico.appendChild(row);
+        }
+
+        
+        function mostrarCheque(quantia) {
+            document.getElementById('nome-jogador').textContent = `Jogador: ${nomeJogador}`;
+            document.getElementById('quantia').textContent = `Quantia: ${quantia.toFixed(2)} unidades`;
+            document.getElementById('cheque').style.display = 'block';
+        }
+
+        
+        window.onload = iniciarJogo;
+    </script>
+</body>
+</html>
